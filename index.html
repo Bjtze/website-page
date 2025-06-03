@@ -183,13 +183,19 @@
         }
       }
 
-      // Penalty if a Black rook moves to A8 early in the game
+      // Penalize Black rook if it moved to A8 or B8 too early and repeatedly
       const history = board.history({ verbose: true });
-      for (let i = 0; i < Math.min(history.length, 10); i++) {
+      let rookABMoves = 0;
+      for (let i = 0; i < history.length; i++) {
         const move = history[i];
-        if (move.color === 'b' && move.to === 'a8' && move.piece === 'r') {
-          score -= 2;
+        if (move.color === 'b' && move.piece === 'r' && (move.to === 'a8' || move.to === 'b8')) {
+          rookABMoves++;
+          if (i < 10) score -= 2; // early rook swinging
         }
+      }
+
+      if (rookABMoves > 2) {
+        score -= (rookABMoves - 2); // discourage repeated rook swings
       }
 
       return score;
@@ -319,4 +325,3 @@
   </script>
 </body>
 </html>
-
