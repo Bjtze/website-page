@@ -35,6 +35,18 @@
       padding: 5px 10px;
       cursor: pointer;
     }
+    .firework {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: yellow;
+      border-radius: 50%;
+      animation: explode 1s ease-out forwards;
+    }
+    @keyframes explode {
+      0% { transform: translate(0, 0); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
 </head>
@@ -173,6 +185,19 @@
       return score;
     }
 
+    function showFireworks() {
+      for (let i = 0; i < 20; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'firework';
+        spark.style.left = `${Math.random() * 480}px`;
+        spark.style.top = `${Math.random() * 480}px`;
+        spark.style.setProperty('--dx', `${(Math.random() - 0.5) * 200}px`);
+        spark.style.setProperty('--dy', `${(Math.random() - 0.5) * 200}px`);
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 1000);
+      }
+    }
+
     function minimax(depth, isMaximizing) {
       if (depth === 0 || game.game_over()) {
         return evaluateBoard(game);
@@ -192,7 +217,10 @@
     }
 
     function botMove() {
-      if (game.game_over()) return;
+      if (game.game_over()) {
+        showFireworks();
+        return;
+      }
       const moves = game.moves();
       let bestMove = null;
       let bestScore = -Infinity;
@@ -211,6 +239,9 @@
       if (bestMove) {
         game.move(bestMove);
         render();
+        if (game.game_over()) {
+          showFireworks();
+        }
       }
     }
 
@@ -221,7 +252,11 @@
         pendingPromotion = null;
         document.getElementById("promotionDialog").style.display = "none";
         render();
-        setTimeout(botMove, 300);
+        if (game.game_over()) {
+          showFireworks();
+        } else {
+          setTimeout(botMove, 300);
+        }
       }
     }
 
@@ -254,7 +289,11 @@
             selected = null;
             legalMoves = [];
             render();
-            setTimeout(botMove, 300);
+            if (game.game_over()) {
+              showFireworks();
+            } else {
+              setTimeout(botMove, 300);
+            }
           }
         } else {
           selected = null;
