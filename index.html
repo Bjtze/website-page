@@ -183,19 +183,23 @@
         }
       }
 
-      // Penalize Black rook if it moved to A8 or B8 too early and repeatedly
+      // Penalize rook oscillation between a8 and b8
       const history = board.history({ verbose: true });
-      let rookABMoves = 0;
-      for (let i = 0; i < history.length; i++) {
-        const move = history[i];
-        if (move.color === 'b' && move.piece === 'r' && (move.to === 'a8' || move.to === 'b8')) {
-          rookABMoves++;
-          if (i < 10) score -= 2; // early rook swinging
+      let oscillationCount = 0;
+      for (let i = 1; i < history.length; i++) {
+        const move1 = history[i - 1];
+        const move2 = history[i];
+        if (
+          move1.color === 'b' && move2.color === 'b' &&
+          move1.piece === 'r' && move2.piece === 'r' &&
+          ((move1.to === 'a8' && move2.to === 'b8') || (move1.to === 'b8' && move2.to === 'a8'))
+        ) {
+          oscillationCount++;
         }
       }
 
-      if (rookABMoves > 2) {
-        score -= (rookABMoves - 2); // discourage repeated rook swings
+      if (oscillationCount > 0) {
+        score -= oscillationCount * 3; // strong penalty per flip-flop
       }
 
       return score;
