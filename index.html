@@ -19,6 +19,22 @@
     #controls {
       margin-top: 10px;
     }
+    #promotionDialog {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      padding: 10px;
+      border: 2px solid #ccc;
+      display: none;
+    }
+    #promotionDialog button {
+      font-size: 18px;
+      margin: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
 </head>
@@ -33,6 +49,13 @@
     </select>
     <button onclick="resetGame()">Reset</button>
   </div>
+  <div id="promotionDialog">
+    <p>Choose promotion:</p>
+    <button onclick="promote('q')">Queen</button>
+    <button onclick="promote('r')">Rook</button>
+    <button onclick="promote('b')">Bishop</button>
+    <button onclick="promote('n')">Knight</button>
+  </div>
   <script>
     const canvas = document.getElementById('board');
     const ctx = canvas.getContext('2d');
@@ -41,6 +64,7 @@
     const piecesImg = {};
     let selected = null;
     let legalMoves = [];
+    let pendingPromotion = null;
 
     function drawBoard() {
       for (let r = 0; r < 8; r++) {
@@ -129,6 +153,8 @@
       game = new Chess();
       selected = null;
       legalMoves = [];
+      pendingPromotion = null;
+      document.getElementById("promotionDialog").style.display = "none";
       render();
     }
 
@@ -188,6 +214,17 @@
       }
     }
 
+    function promote(piece) {
+      if (pendingPromotion) {
+        const moveStr = coordsToAlgebraic(pendingPromotion.from) + coordsToAlgebraic(pendingPromotion.to);
+        const result = game.move({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4), promotion: piece });
+        pendingPromotion = null;
+        document.getElementById("promotionDialog").style.display = "none";
+        render();
+        setTimeout(botMove, 300);
+      }
+    }
+
     canvas.addEventListener('click', e => {
       if (game.turn() !== 'w') return;
       const rect = canvas.getBoundingClientRect();
@@ -204,15 +241,24 @@
           render();
         }
       } else {
-        const moveStr = coordsToAlgebraic(selected) + coordsToAlgebraic(square);
-        const result = game.move(moveStr, { sloppy: true });
-        selected = null;
-        legalMoves = [];
-        if (result) {
-          render();
-          setTimeout(botMove, 300);
+        const from = coordsToAlgebraic(selected);
+        const to = coordsToAlgebraic(square);
+        const isPromotion = game.get(from).type === 'p' && (to[1] === '8');
+
+        if (isPromotion) {
+          pendingPromotion = { from: selected, to: square };
+          document.getElementById("promotionDialog").style.display = "block";
         } else {
-          render();
+          const moveStr = from + to;
+          const result = game.move(moveStr, { sloppy: true });
+          selected = null;
+          legalMoves = [];
+          if (result) {
+            render();
+            setTimeout(botMove, 300);
+          } else {
+            render();
+          }
         }
       }
     });
