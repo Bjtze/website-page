@@ -184,34 +184,30 @@
       }
 
       const history = board.history({ verbose: true });
-      let rookMoveMap = { 'a8': 0, 'b8': 0, 'g8': 0, 'h8': 0 };
-      let lastRookPos = null;
-      let rookBackAndForth = 0;
+      let rookSwings = 0;
+      let rookLast = {};
+      let earlyRookPenalty = 0;
+      let earlyMinorBonus = 0;
 
-      for (let move of history) {
-        if (move.color === 'b' && move.piece === 'r') {
-          if (lastRookPos && ((move.to === 'a8' || move.to === 'b8') && (lastRookPos === 'a8' || lastRookPos === 'b8')) ||
-              ((move.to === 'g8' || move.to === 'h8') && (lastRookPos === 'g8' || lastRookPos === 'h8'))) {
-            rookBackAndForth++;
+      for (let i = 0; i < history.length; i++) {
+        const move = history[i];
+        if (move.color === 'b') {
+          if (move.piece === 'r') {
+            if (i < 10) earlyRookPenalty += 2;
+            const pair = move.from + '-' + move.to;
+            const reverse = move.to + '-' + move.from;
+            if (rookLast[reverse]) rookSwings++;
+            rookLast[pair] = true;
           }
-          lastRookPos = move.to;
+          if ((move.piece === 'n' || move.piece === 'b') && i < 10) {
+            earlyMinorBonus += 0.5;
+          }
         }
       }
 
-      score -= rookBackAndForth * 5;
-          prev = move.to;
-        }
-      }
-      if (leftRightRookSwaps > 0) {
-        score -= leftRightRookSwaps * 4;
-      }
-
-      // Legacy oscillation count logic (disabled)
-      // let oscillationCount = 0;
-      
-      }
-
-      
+      score -= rookSwings * 5;
+      score -= earlyRookPenalty;
+      score += earlyMinorBonus;
 
       return score;
     }
