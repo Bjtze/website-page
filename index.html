@@ -183,9 +183,30 @@
         }
       }
 
-      // Penalize rook oscillation between a8 and b8
       const history = board.history({ verbose: true });
-      let oscillationCount = 0;
+      let leftRightRookSwaps = 0;
+      let prev = null;
+      for (let move of history) {
+        if (move.color === 'b' && move.piece === 'r' && move.to[1] === '8') {
+          if (
+            (prev === 'a8' && move.to === 'h8') ||
+            (prev === 'h8' && move.to === 'a8') ||
+            (prev === 'a8' && move.to === 'b8') ||
+            (prev === 'b8' && move.to === 'a8') ||
+            (prev === 'h8' && move.to === 'g8') ||
+            (prev === 'g8' && move.to === 'h8')
+          ) {
+            leftRightRookSwaps++;
+          }
+          prev = move.to;
+        }
+      }
+      if (leftRightRookSwaps > 0) {
+        score -= leftRightRookSwaps * 4;
+      }
+
+      // Legacy oscillation count logic (disabled)
+      // let oscillationCount = 0;
       for (let i = 1; i < history.length; i++) {
         const move1 = history[i - 1];
         const move2 = history[i];
@@ -198,9 +219,7 @@
         }
       }
 
-      if (oscillationCount > 0) {
-        score -= oscillationCount * 3; // strong penalty per flip-flop
-      }
+      
 
       return score;
     }
