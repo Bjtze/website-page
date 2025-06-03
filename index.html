@@ -183,10 +183,13 @@
         }
       }
 
-      // Penalty for early Rook to A8 (row 0, col 0)
-      const rook = board.get('a8');
-      if (rook && rook.type === 'r' && rook.color === 'b' && board.history().length < 10) {
-        score -= 2; // Penalty for moving rook too early
+      // Penalty if a Black rook moves to A8 early in the game
+      const history = board.history({ verbose: true });
+      for (let i = 0; i < Math.min(history.length, 10); i++) {
+        const move = history[i];
+        if (move.color === 'b' && move.to === 'a8' && move.piece === 'r') {
+          score -= 2;
+        }
       }
 
       return score;
