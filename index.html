@@ -295,7 +295,7 @@
       stockfishWorker.postMessage('uci');
       stockfishWorker.postMessage('ucinewgame');
       stockfishWorker.postMessage(`position fen ${fen}`);
-      stockfishWorker.postMessage('go movetime 3000');
+      stockfishWorker.postMessage('go movetime 1000');
 
       stockfishWorker.onmessage = function(event) {
         const line = event.data;
