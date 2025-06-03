@@ -184,20 +184,21 @@
       }
 
       const history = board.history({ verbose: true });
-      let leftRightRookSwaps = 0;
-      let prev = null;
+      let rookMoveMap = { 'a8': 0, 'b8': 0, 'g8': 0, 'h8': 0 };
+      let lastRookPos = null;
+      let rookBackAndForth = 0;
+
       for (let move of history) {
-        if (move.color === 'b' && move.piece === 'r' && move.to[1] === '8') {
-          if (
-            (prev === 'a8' && move.to === 'h8') ||
-            (prev === 'h8' && move.to === 'a8') ||
-            (prev === 'a8' && move.to === 'b8') ||
-            (prev === 'b8' && move.to === 'a8') ||
-            (prev === 'h8' && move.to === 'g8') ||
-            (prev === 'g8' && move.to === 'h8')
-          ) {
-            leftRightRookSwaps++;
+        if (move.color === 'b' && move.piece === 'r') {
+          if (lastRookPos && ((move.to === 'a8' || move.to === 'b8') && (lastRookPos === 'a8' || lastRookPos === 'b8')) ||
+              ((move.to === 'g8' || move.to === 'h8') && (lastRookPos === 'g8' || lastRookPos === 'h8'))) {
+            rookBackAndForth++;
           }
+          lastRookPos = move.to;
+        }
+      }
+
+      score -= rookBackAndForth * 5;
           prev = move.to;
         }
       }
@@ -207,16 +208,7 @@
 
       // Legacy oscillation count logic (disabled)
       // let oscillationCount = 0;
-      for (let i = 1; i < history.length; i++) {
-        const move1 = history[i - 1];
-        const move2 = history[i];
-        if (
-          move1.color === 'b' && move2.color === 'b' &&
-          move1.piece === 'r' && move2.piece === 'r' &&
-          ((move1.to === 'a8' && move2.to === 'b8') || (move1.to === 'b8' && move2.to === 'a8'))
-        ) {
-          oscillationCount++;
-        }
+      
       }
 
       
@@ -348,3 +340,4 @@
   </script>
 </body>
 </html>
+
