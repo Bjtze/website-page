@@ -232,33 +232,34 @@
       const y = e.clientY - rect.top;
       const square = getSquare(x, y);
 
+      const fromAlgebraic = selected ? coordsToAlgebraic(selected) : null;
+      const toAlgebraic = coordsToAlgebraic(square);
+      const allMoves = game.moves({ verbose: true });
+
       if (!selected) {
-        const from = coordsToAlgebraic(square);
-        const moves = game.moves({ square: from, verbose: true });
+        const moves = game.moves({ square: toAlgebraic, verbose: true });
         if (moves.length > 0) {
           selected = square;
           legalMoves = moves;
           render();
         }
       } else {
-        const from = coordsToAlgebraic(selected);
-        const to = coordsToAlgebraic(square);
-        const isPromotion = game.get(from).type === 'p' && (to[1] === '8');
-
-        if (isPromotion) {
-          pendingPromotion = { from: selected, to: square };
-          document.getElementById("promotionDialog").style.display = "block";
-        } else {
-          const moveStr = from + to;
-          const result = game.move(moveStr, { sloppy: true });
-          selected = null;
-          legalMoves = [];
-          if (result) {
+        const validMove = allMoves.find(m => m.from === fromAlgebraic && m.to === toAlgebraic);
+        if (validMove) {
+          if (validMove.promotion) {
+            pendingPromotion = { from: selected, to: square };
+            document.getElementById("promotionDialog").style.display = "block";
+          } else {
+            game.move(validMove);
+            selected = null;
+            legalMoves = [];
             render();
             setTimeout(botMove, 300);
-          } else {
-            render();
           }
+        } else {
+          selected = null;
+          legalMoves = [];
+          render();
         }
       }
     });
