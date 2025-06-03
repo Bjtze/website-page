@@ -78,25 +78,10 @@
     let selected = null;
     let legalMoves = [];
     let pendingPromotion = null;
-
-    // ---- Stockfish Setup ----
     let stockfishWorker = null;
+
     function initStockfish() {
-      const code = `
-        let engine;
-        onmessage = function(e) {
-          if (!engine) {
-            engine = new Worker('https://cdn.jsdelivr.net/npm/stockfish@16.1.0/src/stockfish-nnue-16.js');
-            engine.onmessage = function(event) {
-              postMessage(event.data);
-            };
-          }
-          engine.postMessage(e.data);
-        };
-      `;
-      const blob = new Blob([code], { type: 'application/javascript' });
-      const url = URL.createObjectURL(blob);
-      stockfishWorker = new Worker(url);
+      stockfishWorker = new Worker('https://cdn.jsdelivr.net/npm/stockfish@16.1.0/src/stockfish-nnue-16.js');
     }
 
     function drawBoard() {
@@ -284,18 +269,18 @@
       stockfishWorker.postMessage('uci');
       stockfishWorker.postMessage('ucinewgame');
       stockfishWorker.postMessage(`position fen ${fen}`);
-      stockfishWorker.postMessage('go movetime 300'); // Fast move in 300ms
+      stockfishWorker.postMessage('go movetime 300');
 
       stockfishWorker.onmessage = function(event) {
         const line = event.data;
         if (line.startsWith('bestmove')) {
-          const parts = line.split(' ');
-          const move = parts[1];
-          if (move && move !== '(none)') {
-            const from = move.slice(0, 2);
-            const to = move.slice(2, 4);
-            const promo = move.length > 4 ? move[4] : undefined;
-            game.move({ from, to, promotion: promo });
+          const bestMove = line.split(' ')[1];
+          if (bestMove && bestMove !== '(none)') {
+            const from = bestMove.slice(0, 2);
+            const to = bestMove.slice(2, 4);
+            const promotion = bestMove.length > 4 ? bestMove[4] : undefined;
+
+            game.move({ from, to, promotion });
             render();
             if (game.game_over()) showFireworks();
           }
@@ -369,7 +354,7 @@
 
     loadPieceImages(() => {
       render();
-      initStockfish();
+      initStockfish(); // ✅ Initialize directly from URL
     });
   </script>
 </body>
