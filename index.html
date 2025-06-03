@@ -182,6 +182,13 @@
           }
         }
       }
+
+      // Penalty for early Rook to A8 (row 0, col 0)
+      const rook = board.get('a8');
+      if (rook && rook.type === 'r' && rook.color === 'b' && board.history().length < 10) {
+        score -= 2; // Penalty for moving rook too early
+      }
+
       return score;
     }
 
