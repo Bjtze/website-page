@@ -40,6 +40,7 @@
     let game = new Chess();
     const piecesImg = {};
     let selected = null;
+    let legalMoves = [];
 
     function drawBoard() {
       for (let r = 0; r < 8; r++) {
@@ -47,6 +48,20 @@
           const isLight = (r + c) % 2 === 0;
           ctx.fillStyle = isLight ? '#f0d9b5' : '#b58863';
           ctx.fillRect(c * squareSize, r * squareSize, squareSize, squareSize);
+        }
+      }
+
+      if (selected) {
+        ctx.strokeStyle = '#00f';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(selected.col * squareSize, selected.row * squareSize, squareSize, squareSize);
+
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+        for (const move of legalMoves) {
+          const to = algebraicToCoords(move.to);
+          ctx.beginPath();
+          ctx.arc(to.col * squareSize + squareSize / 2, to.row * squareSize + squareSize / 2, 10, 0, 2 * Math.PI);
+          ctx.fill();
         }
       }
     }
@@ -95,15 +110,25 @@
       return { col, row };
     }
 
-    function getMoveString(from, to) {
+    function coordsToAlgebraic(square) {
       const files = 'abcdefgh';
       const ranks = '87654321';
-      return files[from.col] + ranks[from.row] + files[to.col] + ranks[to.row];
+      return files[square.col] + ranks[square.row];
+    }
+
+    function algebraicToCoords(square) {
+      const files = 'abcdefgh';
+      const ranks = '87654321';
+      return {
+        col: files.indexOf(square[0]),
+        row: ranks.indexOf(square[1])
+      };
     }
 
     function resetGame() {
       game = new Chess();
       selected = null;
+      legalMoves = [];
       render();
     }
 
@@ -171,14 +196,23 @@
       const square = getSquare(x, y);
 
       if (!selected) {
-        selected = square;
+        const from = coordsToAlgebraic(square);
+        const moves = game.moves({ square: from, verbose: true });
+        if (moves.length > 0) {
+          selected = square;
+          legalMoves = moves;
+          render();
+        }
       } else {
-        const move = getMoveString(selected, square);
-        const result = game.move(move, { sloppy: true });
+        const moveStr = coordsToAlgebraic(selected) + coordsToAlgebraic(square);
+        const result = game.move(moveStr, { sloppy: true });
         selected = null;
+        legalMoves = [];
         if (result) {
           render();
           setTimeout(botMove, 300);
+        } else {
+          render();
         }
       }
     });
@@ -189,3 +223,4 @@
   </script>
 </body>
 </html>
+
